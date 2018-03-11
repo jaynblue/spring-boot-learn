@@ -1,0 +1,77 @@
+#你可以在你的顶层工作目录中添加一个叫".gitignore"的文件，
+#来告诉Git系统要忽略 掉哪些文件，下面是文件内容的示例:
+
+# 以'#' 开始的行，被视为注释.
+# 忽略掉所有文件名是 foo.txt 的文件.
+
+#foo.txt
+# 忽略所有生成的 html 文件,
+#*.html
+# foo.html是手工维护的，所以例外.
+#!foo.html
+#  忽略所有.o 和 .a文件.
+#*.[oa]
+
+
+# Compiled class file
+*.class
+
+# Log file
+*.log
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+#  dir
+
+# 忽略 build/ 目录下的所有文件
+build/
+target/
+out/
+gradle/
+.gradle/
+.idea/
+.idea
+.git/
+./
+idea/
+../.idea
+/catalina.base_IS_UNDEFINED/
+
+
+.gradle
+/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
