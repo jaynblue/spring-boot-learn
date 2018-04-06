@@ -1,9 +1,12 @@
+<<<<<<< HEAD
 [toc]
 
 # spring-boot-learn
 spring boot 学习
 
 
+=======
+>>>>>>> 7e626ab6357774a0696fe9b2894dc03caa277ada
 
 # Spring 全家桶
  
@@ -54,7 +57,7 @@ public @interface SpringBootApplication {
 @ComponentScan
 ```
 
-##### @SpringBootConfiguration
+### @SpringBootConfiguration
 这里的@Configuration对我们来说不陌生，它就是JavaConfig形式的Spring Ioc容器的配置类使用的那个@Configuration
 ```
 表达形式层面
@@ -128,7 +131,7 @@ public class MockConfiguration{
 ```
 如果一个bean的定义依赖其他bean,则直接调用对应的JavaConfig类中依赖bean的创建方法就可以了。
 
-##### @ComponentScan
+### @ComponentScan
 
 @ComponentScan这个注解在Spring中很重要，它对应XML配置中的元素，@ComponentScan的功能其实就是自动扫描并加载符合条件的组件（比如@Component和@Repository等）或者bean定义，最终将这些bean定义加载到IoC容器中。
 
@@ -136,7 +139,7 @@ public class MockConfiguration{
 
 > 注：所以SpringBoot的启动类最好是放在root package下，因为默认不指定basePackages
 
-##### @EnableAutoConfiguration
+### @EnableAutoConfiguration
 
 个人感觉@EnableAutoConfiguration这个Annotation最为重要，大家是否还记得Spring框架提供的各种名字为@Enable开头的Annotation定义？比如@EnableScheduling、@EnableCaching、@EnableMBeanExport等，@EnableAutoConfiguration的理念和做事方式其实一脉相承，简单概括一下就是，借助@Import的支持，收集和注册特定场景相关的bean定义。
 
@@ -199,7 +202,7 @@ public abstract class SpringFactoriesLoader {
 
 转载<http://tengj.top/2017/03/09/springboot3/>
 
-## SpringApplication执行流程,SpringApplication.run();
+### SpringApplication执行流程,SpringApplication.run();
 
 
 SpringApplication的run方法的实现是我们本次旅程的主要线路，该方法的主要流程大体可以归纳如下：
