@@ -1,11 +1,8 @@
+* auto-gen TOC:Spring 全家桶
+
 # spring-boot-learn
 spring boot 学习
 
-* auto-gen TOC:
- 
- 
-# Spring 全家桶
- 
 ## 一、Spring Boot 启动流程分析
 
 > spring boot 2.0 和 spring boot 1.0 有点小区别。
