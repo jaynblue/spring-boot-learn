@@ -1,13 +1,9 @@
-<<<<<<< HEAD
 [toc]
 
 # spring-boot-learn
 spring boot 学习
 
-
-=======
->>>>>>> 7e626ab6357774a0696fe9b2894dc03caa277ada
-
+ 
 # Spring 全家桶
  
 ## 一、Spring Boot 启动流程分析
