@@ -193,7 +193,7 @@ public abstract class SpringFactoriesLoader {
 
 转载<http://tengj.top/2017/03/09/springboot3/>
 
-## SpringApplication执行流程,SpringApplication.run();
+### SpringApplication执行流程,SpringApplication.run();
 
 
 SpringApplication的run方法的实现是我们本次旅程的主要线路，该方法的主要流程大体可以归纳如下：
