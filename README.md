@@ -1,6 +1,8 @@
 # spring-boot-learn
 spring boot 学习
 
+* auto-gen TOC:
+{:toc}
 
 
 # Spring 全家桶
