@@ -4,6 +4,7 @@ spring boot 学习
 * auto-gen TOC:
 {:toc}
 
+[toc]
 
 # Spring 全家桶
  
