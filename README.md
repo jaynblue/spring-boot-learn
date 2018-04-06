@@ -1,6 +1,5 @@
-* auto-gen TOC:
 
- Spring 全家桶
+**Spring 全家桶**
  
 # 一、Spring Boot 启动流程分析
 
