@@ -725,7 +725,7 @@ private void refreshContext(ConfigurableApplicationContext context) {
 	
 ```
 
-#### 创建内嵌 Tomcat 的调用过程
+
 ``` 
 //上面的 refreshContext 方法里面调用 自己类里面refresh 方法
 
@@ -828,7 +828,7 @@ Spring boot 2.0
 由于 AnnotationConfigServletWebServerApplicationContext 继承ServletWebServerApplicationContext，
 所以会执行 ServletWebServerApplicationContext的refresh 方法，而 ServletWebServerApplicationContext 
 
-![image](http://note.youdao.com/yws/res/3481/WEBRESOURCEedba6f4c94a9fb3ec922e8c78e2c5089)
+![](http://note.youdao.com/yws/res/3481/WEBRESOURCEedba6f4c94a9fb3ec922e8c78e2c5089)
 
 AnnotationConfigServletWebServerApplicationContext 继承 ServletWebServerApplicationContext 继承 GenericWebApplicationContext
 继承 GenericApplicationContext 继承 抽象类 AbstractApplicationContext
@@ -1245,14 +1245,49 @@ static void registerApplicationContext(ConfigurableApplicationContext applicatio
 
 12、查找当前ApplicationContext中是否注册有CommandLineRunner，如果有，则遍历执行它们。
 
-```
+ refreshContext之后的方法是afterRefresh，这名字起的真...好。afterRefresh方法内只调用了callRunners一个方法，\
+ 这个方法从上下文中获取了所有的ApplicationRunner和CommandLineRunner接口的实现类，并执行这些实现类的run方法。\
+ 例如Spring Batch的JobLauncherCommandLineRunner：
 
 ```
-13、正常情况下，遍历执行SpringApplicationRunListener的finished()方法、（如果整个过程出现异常，则依然调用所有SpringApplicationRunListener的finished()方法，只不过这种情况下会将异常信息一并传入处理）
+@Override
+public void run(String... args) throws JobExecutionException {
+    logger.info("Running default command line with: " + Arrays.asList(args));
+    launchJobFromProperties(StringUtils.splitArrayElementsIntoProperties(args, "="));
+}
+
+
+/**
+ * Called after the context has been refreshed.
+ * @param context the application context
+ * @param args the application arguments
+ */
+protected void afterRefresh(ConfigurableApplicationContext context,
+        ApplicationArguments args) {
+}
+
+```
+13、正常情况下，遍历执行SpringApplicationRunListener的finished()方法、
+（如果整个过程出现异常，则依然调用所有SpringApplicationRunListener的finished()方法，只
+不过这种情况下会将异常信息一并传入处理）
 ```
 spring boot 1.x 才有，2.0 找不到这个finished方法
 
 listeners.finished(context, null);
+
+listeners.finished(context, null)实际上是在exception为null的情况下发布了ApplicationReadyEvent事件。
+
+启动至此就差不多了，于是停止stopWatch.stop()，
+然后把时间打到日志里：Started Application in ***.462 seconds (JVM running for ***.977)，
+然后感受下这记完就扔的气势：
+
+``` 
+if (this.logStartupInfo) {
+            new StartupInfoLogger(this.mainApplicationClass)
+                    .logStarted(getApplicationLog(), stopWatch);
+}
+
+```
 
 而是多了
 listeners.started(context);
@@ -1277,16 +1312,516 @@ listeners.running(context);
 ---
  
 
-## 二、 Spring boot 如何判断内嵌Tomcat启动 ? 还是独立tomcat 启动 war? 或者是 jar 方式启动?
+## 二、 Spring boot 如何判断内嵌Tomcat启动 ? 还是单独tomcat 启动 war? 或者是 jar 方式启动?
 
-spring-boot默认提供内嵌的tomcat，所以打包直接生成jar包，
-用java -jar命令就可以启动。
-但是，有时候我们更希望一个tomcat来管理多个项目，
-这种情况下就需要项目是war格式的包而不是jar格式的包。
-spring-boot同样提供了解决方案，只需要简单的几步更改就可以了，
-这里提供maven项目的解决方法：
+- spring-boot默认提供内嵌的tomcat，在IDE 里面可以直接启动。
+
+- 我们也可以单独使用 Tomcat来 启动打包成war 项目，\
+
+- 我们也可以打包成jar 来启动项目
  
+ 
+ 
+ ### Spring Boot内嵌Tomcat启动
+ 
+ 上面的一篇中在Spring Boot启动过程提到过
+ 
+- Spring boot 2.0 创建内嵌Servlet 容器: 
+> ServletWebServerApplicationContext 类createWebServer 
+ 
+- Spring boot 1.x 创建 Servlet 容器 
+> EmbeddedWebApplicationContext 类createEmbeddedServletContainer
+ 
+创建了内嵌的Servlet容器，我用的是默认的Tomcat。\
+
+Spring boot 1.x 源码自己去看。 
+源码
+ 
+``` 
+ServletWebServerApplicationContext 类的方法
+
+@Override
+protected void onRefresh() {
+   
+    // 调用父类AbstractApplicationContext 方法
+    super.onRefresh();
+    try {
+        
+        //创建WebServer
+        createWebServer();
+    }
+    catch (Throwable ex) {
+        throw new ApplicationContextException("Unable to start web server", ex);
+    }
+}
+
+
 ```
+
+创建 容器
+
+``` 
+private void createWebServer() {
+    WebServer webServer = this.webServer;
+    ServletContext servletContext = getServletContext();
+    // 如果是内嵌tomcat 进入这里
+    if (webServer == null && servletContext == null) {
+        ServletWebServerFactory factory = getWebServerFactory();
+        this.webServer = factory.getWebServer(getSelfInitializer());
+    }
+    
+    // 独立tomcat 运行，进入这里,因为在启动的时候初始化了servletContext，
+    // 而 webServer 在SpringApplication run 方法调用的时候由于是独立的，这个是null.
+    else if (servletContext != null) {
+        try {
+            getSelfInitializer().onStartup(servletContext);
+        }
+        catch (ServletException ex) {
+            throw new ApplicationContextException("Cannot initialize servlet context",
+                    ex);
+        }
+    }
+    initPropertySources();
+}
+
+```
+ServletWebServerFactory factory = getWebServerFactory();
+ 
+从 this.webServer = factory.getWebServer(getSelfInitializer());
+ServletWebServerFactory 有三个实现类：
+> TomcatServletWebServerFactory、JettyServletWebServerFactory、UndertowServletWebServerFactory
+
+所以我们知道 SpringBoot支持三种内嵌容器的定制化配置：Tomcat、Jetty、Undertow。\
+（ getWebServer 方法中调用了ServerProperties，\
+从ServerProperties的实例方法customize可以看出SpringBoot支持三种内嵌容器的定制化配置：Tomcat、Jetty、Undertow。）
+
+这里直接说TomcatServletWebServerFactory的getWebServer 方法了，不过首先是getSelfInitializer()方法先执行的：
+
+``` 
+/**
+ * Returns the {@link ServletContextInitializer} that will be used to complete the
+ * setup of this {@link WebApplicationContext}.
+ * @return the self initializer
+ * @see #prepareWebApplicationContext(ServletContext)
+ */
+private org.springframework.boot.web.servlet.ServletContextInitializer getSelfInitializer() {
+    return this::selfInitialize;
+}
+
+private void selfInitialize(ServletContext servletContext) throws ServletException {
+    prepareWebApplicationContext(servletContext);
+    ConfigurableListableBeanFactory beanFactory = getBeanFactory();
+    ExistingWebApplicationScopes existingScopes = new ExistingWebApplicationScopes(
+            beanFactory);
+    WebApplicationContextUtils.registerWebApplicationScopes(beanFactory,
+            getServletContext());
+    existingScopes.restore();
+    WebApplicationContextUtils.registerEnvironmentBeans(beanFactory,
+            getServletContext());
+    for (ServletContextInitializer beans : getServletContextInitializerBeans()) {
+        beans.onStartup(servletContext);
+    }
+}
+
+```
+
+将初始化的ServletContextInitializer传给了getWebServer方法。
+
+进入了getWebServer 方法直接就是实例化了一个Tomcat.\
+
+Connector实例创建好了之后tomcat.getService().addConnector(connector)，getService的getServer中new了一个StandardServer，
+
+StandardServer的初始化主要是创建了globalNamingResources（globalNamingResources主要用于管理明明上下文和JDNI上下文），
+
+并根据catalina.useNaming判断是否注册NamingContextListener监听器给lifecycleListeners。
+
+
+```
+
+@Override
+public WebServer getWebServer(ServletContextInitializer... initializers) {
+    
+    // 实例化tomcat
+    Tomcat tomcat = new Tomcat();
+    // 如果目录不存在，则创建
+    File baseDir = (this.baseDirectory != null ? this.baseDirectory
+            : createTempDir("tomcat"));
+    tomcat.setBaseDir(baseDir.getAbsolutePath());
+    
+    //接着：创建Connector过程中
+    Connector connector = new Connector(this.protocol);
+    tomcat.getService().addConnector(connector);
+    customizeConnector(connector);
+    tomcat.setConnector(connector);
+    tomcat.getHost().setAutoDeploy(false);
+    configureEngine(tomcat.getEngine());
+    for (Connector additionalConnector : this.additionalTomcatConnectors) {
+        tomcat.getService().addConnector(additionalConnector);
+    }
+    prepareContext(tomcat.getHost(), initializers);
+    return getTomcatWebServer(tomcat);
+}
+		
+```
+ 创建Server之后initBaseDir，先读取catalina.home配置System.getProperty(Globals.CATALINA_BASE_PROP)，
+ 
+ 如果没取到则使用之前生成的临时目录，这段直接看代码吧：
+ 
+``` 
+//Tomcat 类
+
+protected void initBaseDir() {
+    String catalinaHome = System.getProperty(Globals.CATALINA_HOME_PROP);
+    if (basedir == null) {
+        basedir = System.getProperty(Globals.CATALINA_BASE_PROP);
+    }
+    if (basedir == null) {
+        basedir = catalinaHome;
+    }
+    if (basedir == null) {
+        // Create a temp dir.
+        basedir = System.getProperty("user.dir") +
+            "/tomcat." + port;
+    }
+
+    File baseFile = new File(basedir);
+    baseFile.mkdirs();
+    try {
+        baseFile = baseFile.getCanonicalFile();
+    } catch (IOException e) {
+        baseFile = baseFile.getAbsoluteFile();
+    }
+    server.setCatalinaBase(baseFile);
+    System.setProperty(Globals.CATALINA_BASE_PROP, baseFile.getPath());
+    basedir = baseFile.getPath();
+
+    if (catalinaHome == null) {
+        server.setCatalinaHome(baseFile);
+    } else {
+        File homeFile = new File(catalinaHome);
+        homeFile.mkdirs();
+        try {
+            homeFile = homeFile.getCanonicalFile();
+        } catch (IOException e) {
+            homeFile = homeFile.getAbsoluteFile();
+        }
+        server.setCatalinaHome(homeFile);
+    }
+    System.setProperty(Globals.CATALINA_HOME_PROP,
+            server.getCatalinaHome().getPath());
+}
+
+```
+
+然后又实例化了个StandardService，代码并没有什么特别的：
+
+```
+service = new StandardService();
+service.setName("Tomcat");
+server.addService( service )
+
+```
+server.addService( service )这里除了发布了一个PropertyChangeEvent事件，也没做什么特别的，最后返回这个server。
+addConnector的逻辑和上面addService没什么区别。
+
+然后是customizeConnector，这里设置了Connector的端口、编码等信息，并将“bindOnInit”和对应值false写入了最开头说的静态代码块中的replacements集合，\
+IntrospectionUtils.setProperty(protocolHandler, repl, value) \
+通过反射的方法将protocolHandler实现对象的setBindOnInit存在的情况下（拼字符串拼出来的）set为前面的false，\
+这个方法里有大量的判断比如参数类型及setter的参数类型，比如返回值类型以及没找到还会try a setProperty("name", "value")等，\
+setProperty可以处理比如AbstractEndpoint中有个HashMap<String, Object> attributes的属性时会attributes.put(name, value)。 \
+如果是ssl还会执行customizeSsl方法，设置一些SSL用的属性比如协议比如秘钥还有可以用上秘钥仓库等。如果配置了压缩，这里还会给协议的相关setter设置值。 \
+tomcat.setConnector(connector)不解释。tomcat.getHost().setAutoDeploy(false)，getHost方法中创建了StandardHost并设置host名（例如localhost）， \
+并getEngine().addChild( host )；然后设置host的自动部署。configureEngine(tomcat.getEngine())，getEngine中如果engine为null就初始化标准引擎， \
+设置名字为Tomcat,设置Realm和service.setContainer(engine)，不过这里engine已经在getHost初始化过了所以直接返回; \
+configureEngine方法先设置引擎的后台进程延迟，并将引擎的Value对象注册给引擎的pipeline，此时尚无value对象实例。\
+这里简单说明一下：value对象在Tomcat的各级容器中都有标准类型，并且各级容器都有一个pipeline， \
+在请求处理过程中会从各级的第一个value对象开始依次执行一遍，value用于加入到对应的各级容器的逻辑，默认有一个标注value实现，\
+名字类似StandardHostValue。 \
+ 
+ 
+ 
+ 
+ prepareContext(tomcat.getHost(), initializers)，initializers这里是AnnotationConfigEmbeddedWebApplicationContext，Context级的根；
+ 
+ 准备Context的过程主要设置Base目录，new一个TomcatEmbeddedContext并在构造中判断了下loadOnStartup方法是否被重写；
+ 
+ 注册一个FixContextListener监听，这个监听用于设置context的配置状态以及是否加入登录验证的逻辑；
+ 
+ context.setParentClassLoader；设置各种语言的编码映射，我这里是en和fr设置为UTF-8，
+ 
+ 此处可以使用配置文件org/apache/catalina/util/CharsetMapperDefault .properties；
+ 
+ 设置是否使用相对地址重定向useRelativeRedirects=false，此属性应该是Tomcat 8.0.30版本加上的；
+ 
+ 接着就是初始化webapploader,这里和完整版的Tomcat有点不一样，它用的是虚拟机的方式，
+ 
+ 会将加载类向上委托loader.setDelegate(true)，context.setLoader(loader);之后就开始创建Wapper了，
+ 
+ 至此engine，host，context及wrapper四个层次的容器都创建完了：
+  
+``` 
+protected void prepareContext(Host host, ServletContextInitializer[] initializers) {
+
+    File documentRoot = getValidDocumentRoot();
+    TomcatEmbeddedContext context = new TomcatEmbeddedContext();
+    if (documentRoot != null) {
+        context.setResources(new LoaderHidingResourceRoot(context));
+    }
+    context.setName(getContextPath());
+    context.setDisplayName(getDisplayName());
+    context.setPath(getContextPath());
+    File docBase = (documentRoot != null ? documentRoot
+            : createTempDir("tomcat-docbase"));
+    context.setDocBase(docBase.getAbsolutePath());
+    context.addLifecycleListener(new FixContextListener());
+    context.setParentClassLoader(
+            this.resourceLoader != null ? this.resourceLoader.getClassLoader()
+                    : ClassUtils.getDefaultClassLoader());
+    resetDefaultLocaleMapping(context);
+    addLocaleMappings(context);
+    context.setUseRelativeRedirects(false);
+    configureTldSkipPatterns(context);
+    WebappLoader loader = new WebappLoader(context.getParentClassLoader());
+    loader.setLoaderClass(TomcatEmbeddedWebappClassLoader.class.getName());
+    loader.setDelegate(true);
+    context.setLoader(loader);
+    if (isRegisterDefaultServlet()) {
+        addDefaultServlet(context);
+    }
+    if (shouldRegisterJspServlet()) {
+        addJspServlet(context);
+        addJasperInitializer(context);
+    }
+    context.addLifecycleListener(new StaticResourceConfigurer(context));
+    ServletContextInitializer[] initializersToUse = mergeInitializers(initializers);
+    host.addChild(context);
+    configureContext(context, initializersToUse);
+    postProcessContext(context);
+}
+
+```
+
+```
+private void addDefaultServlet(Context context) {
+    Wrapper defaultServlet = context.createWrapper();
+    defaultServlet.setName("default");
+    defaultServlet.setServletClass("org.apache.catalina.servlets.DefaultServlet");
+    defaultServlet.addInitParameter("debug", "0");
+    defaultServlet.addInitParameter("listings", "false");
+    defaultServlet.setLoadOnStartup(1);
+    // Otherwise the default location of a Spring DispatcherServlet cannot be set
+    defaultServlet.setOverridable(true);
+    context.addChild(defaultServlet);
+    context.addServletMappingDecoded("/", "default");
+}
+
+```
+connector从socket接收的数据，解析成HttpServletRequest后就会经过这几层容器，有容器各自的Value对象链依次处理。
+
+接着是是否注册jspServlet,jasperInitializer和StoreMergedWebXmlListener我这里是都没有的。接着的mergeInitializers方法：
+
+```
+/**
+ * Utility method that can be used by subclasses wishing to combine the specified
+ * {@link ServletContextInitializer} parameters with those defined in this instance.
+ * @param initializers the initializers to merge
+ * @return a complete set of merged initializers (with the specified parameters
+ * appearing first)
+ */
+protected final ServletContextInitializer[] mergeInitializers(
+        ServletContextInitializer... initializers) {
+    List<ServletContextInitializer> mergedInitializers = new ArrayList<>();
+    mergedInitializers.add((servletContext) -> this.initParameters
+            .forEach(servletContext::setInitParameter));
+    mergedInitializers.add(new SessionConfiguringInitializer(this.session));
+    mergedInitializers.addAll(Arrays.asList(initializers));
+    mergedInitializers.addAll(this.initializers);
+    return mergedInitializers.toArray(new ServletContextInitializer[0]);
+}
+```
+
+configureContext(context, initializersToUse)对context做了些设置工作，
+包括TomcatStarter(实例化并set给context),LifecycleListener,contextValue,errorpage,Mime,session超时持久化等以及一些自定义工作：
+
+
+``` 
+/**
+ * Configure the Tomcat {@link Context}.
+ * @param context the Tomcat context
+ * @param initializers initializers to apply
+ */
+protected void configureContext(Context context,
+        ServletContextInitializer[] initializers) {
+    TomcatStarter starter = new TomcatStarter(initializers);
+    if (context instanceof TomcatEmbeddedContext) {
+        // Should be true
+        ((TomcatEmbeddedContext) context).setStarter(starter);
+    }
+    context.addServletContainerInitializer(starter, NO_CLASSES);
+    for (LifecycleListener lifecycleListener : this.contextLifecycleListeners) {
+        context.addLifecycleListener(lifecycleListener);
+    }
+    for (Valve valve : this.contextValves) {
+        context.getPipeline().addValve(valve);
+    }
+    for (ErrorPage errorPage : getErrorPages()) {
+        new TomcatErrorPage(errorPage).addToContext(context);
+    }
+    for (MimeMappings.Mapping mapping : getMimeMappings()) {
+        context.addMimeMapping(mapping.getExtension(), mapping.getMimeType());
+    }
+    configureSession(context);
+    for (TomcatContextCustomizer customizer : this.tomcatContextCustomizers) {
+        customizer.customize(context);
+    }
+}
+```
+
+Session如果不需要持久化会注册一个DisablePersistSessionListener。其他定制化操作是通过TomcatContextCustomizer的实现类实现的：
+
+![](https://images2015.cnblogs.com/blog/445166/201702/445166-20170210161400932-1223969013.png)
+
+
+context配置完了作为child add给host,add时给context注册了个内存泄漏跟踪的监听MemoryLeakTrackingListener。
+
+postProcessContext(context)方法是空的，留给子类重写用的。
+
+getEmbeddedServletContainer方法的最后一行：return getTomcatEmbeddedServletContainer(tomcat)。
+
+``` 
+protected TomcatWebServer getTomcatWebServer(Tomcat tomcat) {
+    return new TomcatWebServer(tomcat, getPort() >= 0);
+}
+```
+
+TomcatWebServer的构造函数：
+``` 
+/**
+ * Create a new {@link TomcatWebServer} instance.
+ * @param tomcat the underlying Tomcat server
+ * @param autoStart if the server should be started
+ */
+public TomcatWebServer(Tomcat tomcat, boolean autoStart) {
+    Assert.notNull(tomcat, "Tomcat Server must not be null");
+    this.tomcat = tomcat;
+    this.autoStart = autoStart;
+    initialize();
+}
+
+```
+
+initialize的第一个方法addInstanceIdToEngineName对全局原子变量containerCounter+1，由于初始值是-1，
+所以addInstanceIdToEngineName方法内后续的获取引擎并设置名字的逻辑没有执行：
+``` 
+private void addInstanceIdToEngineName() {
+    int instanceId = containerCounter.incrementAndGet();
+    if (instanceId > 0) {
+        Engine engine = this.tomcat.getEngine();
+        engine.setName(engine.getName() + "-" + instanceId);
+    }
+}
+```
+
+initialize的第二个方法removeServiceConnectors，
+
+将上面new的connection以service（这里是StandardService[Tomcat]）做key保存到private final Map<Service, Connector[]> serviceConnectors中，
+并将StandardService中的protected Connector[] connectors与service解绑(connector.setService((Service)null);)，
+解绑后下面利用LifecycleBase启动容器就不会启动到Connector了。
+
+　　之后是this.tomcat.start()，这段比较复杂，我单独总结一篇吧。
+
+　　TomcatWebServer 的初始化，接下来是rethrowDeferredStartupExceptions，这个方法检查初始化过程中的异常，
+如果有直接在主线程抛出，检查方法是TomcatStarter中的private volatile Exception startUpException，
+这个值是在Context启动过程中记录的：
+
+``` 
+private void initialize() throws WebServerException {
+		TomcatWebServer.logger
+				.info("Tomcat initialized with port(s): " + getPortsDescription(false));
+		synchronized (this.monitor) {
+			try {
+				addInstanceIdToEngineName();
+
+				Context context = findContext();
+				context.addLifecycleListener((event) -> {
+					if (context.equals(event.getSource())
+							&& Lifecycle.START_EVENT.equals(event.getType())) {
+						// Remove service connectors so that protocol binding doesn't
+						// happen when the service is started.
+						removeServiceConnectors();
+					}
+				});
+
+				// Start the server to trigger initialization listeners
+				// 启动tomcat
+				this.tomcat.start();
+
+				// We can re-throw failure exception directly in the main thread
+				// 这个方法检查初始化过程中的异常
+				rethrowDeferredStartupExceptions();
+
+				try {
+				// 　绑定命名的上下文和classloader，不成功也无所谓：
+				
+					ContextBindings.bindClassLoader(context, context.getNamingToken(),
+							getClass().getClassLoader());
+				}
+				catch (NamingException ex) {
+					// Naming is not enabled. Continue
+				}
+
+				// Unlike Jetty, all Tomcat threads are daemon threads. We create a
+				// blocking non-daemon to stop immediate shutdown
+				startDaemonAwaitThread();
+			}
+			catch (Exception ex) {
+				throw new WebServerException("Unable to start embedded Tomcat", ex);
+			}
+		}
+	}
+	
+```
+Spring boot 2.0 没有这里调用了
+　Context context = findContext()：
+
+``` 
+private Context findContext() {
+    for (Container child : this.tomcat.getHost().findChildren()) {
+        if (child instanceof Context) {
+            return (Context) child;
+        }
+    }
+    throw new IllegalStateException("The host does not contain a Context");
+}
+
+```
+
+
+ startDaemonAwaitThread方法的注释是：与Jetty不同，
+ Tomcat所有的线程都是守护线程，所以创建一个非守护线程（例：Thread[container-0,5,main]）来避免服务到这就shutdown了：
+ 
+``` 
+// Unlike Jetty, all Tomcat threads are daemon threads. We create a
+// blocking non-daemon to stop immediate shutdown
+startDaemonAwaitThread();
+
+
+
+```
+回到ServletWebServerApplicationContext，initPropertySources方法，用初始化好的servletContext完善环境变量：
+
+
+
+createWebServer (createEmbeddedServletContainer)就结束了，内嵌容器的启动过程至此结束。
+
+
+
+
+
+
+
+--- 
+
 @SpringBootApplication
 public class ServiceApplication extends SpringBootServletInitializer{
 
