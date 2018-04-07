@@ -4,7 +4,7 @@
  
 ## 一、Spring Boot 启动流程分析
 
-> spring boot 2.0 和 spring boot 1.0 有点小区别。
+> spring boot 2.0 和 spring boot 1.0 源码有点小改动。
 
 
 ### 我们程序的入口
@@ -703,7 +703,7 @@ public void contextLoaded(ConfigurableApplicationContext context) {
 
 ```
 
-11、调用ApplicationContext的refresh()方法，完成IoC容器可用的最后一道工序。
+11、调用ApplicationContext的refresh()方法，完成IoC容器可用的最后一道工序，这里会去创建容器.
 ```
 refreshContext(context);
 afterRefresh(context, applicationArguments);
@@ -781,6 +781,7 @@ public void refresh() throws BeansException, IllegalStateException {
             initApplicationEventMulticaster();
 
             // Initialize other special beans in specific context subclasses.
+            // 创建容器
             onRefresh();
 
             // Check for listener beans and register them.
@@ -1316,7 +1317,7 @@ listeners.running(context);
 
 - spring-boot默认提供内嵌的tomcat，在IDE 里面可以直接启动。
 
-- 我们也可以单独使用 Tomcat来 启动打包成war 项目，\
+- 我们也可以单独使用 Tomcat来 启动打包成war 项目，
 
 - 我们也可以打包成jar 来启动项目
  
@@ -1332,11 +1333,22 @@ listeners.running(context);
 - Spring boot 1.x 创建 Servlet 容器 
 > EmbeddedWebApplicationContext 类createEmbeddedServletContainer
  
-创建了内嵌的Servlet容器，我用的是默认的Tomcat。\
+创建了内嵌的Servlet容器，我用的是默认的Tomcat。
 
 Spring boot 1.x 源码自己去看。 
-源码
- 
+
+SpringApplication run 方法调用 -> refreshContext(context);
+
+这里调用 AbstractApplicationContext 的refresh方法
+
+``` 
+protected void refresh(ApplicationContext applicationContext) {
+    Assert.isInstanceOf(AbstractApplicationContext.class, applicationContext);
+    //入口
+    ((AbstractApplicationContext) applicationContext).refresh();
+}
+```
+refresh 方法里面会调用  ServletWebServerApplicationContext 类的onRefresh 方法。
 ``` 
 ServletWebServerApplicationContext 类的方法
 
@@ -1816,7 +1828,8 @@ createWebServer (createEmbeddedServletContainer)就结束了，内嵌容器的�
 
 
 
-
+转载
+<http://www.cnblogs.com/saaav/p/6323350.html>
 
 
 
