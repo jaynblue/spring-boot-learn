@@ -9,14 +9,11 @@ import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
  * @author pankui
  */
 @SpringBootApplication
-public class ServiceApplication extends SpringBootServletInitializer{
+public class ServiceApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(ServiceApplication.class, args);
     }
 
-    @Override
-    protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
-        return application.sources(ServiceApplication.class);
-    }
+
 }

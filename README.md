@@ -5,6 +5,30 @@
 ## 一、Spring Boot 启动流程分析
 
 > spring boot 2.0 和 spring boot 1.0 源码有点小改动。
+``` 
+为了支持reactive使用场景，内嵌的容器包结构被重构了的幅度有点大。
+EmbeddedServletContainer被重命名为WebServer，
+并且org.springframework.boot.context.embedded 包被重定向到了org.springframework.boot.web.embedded包下。
+举个例子，如果你要使用TomcatEmbeddedServletContainerFactory回调接口来自定义内嵌Tomcat容器，
+你现在应该使用TomcatServletWebServerFactory。
+
+```
+Servlet-specific 的server properties调整
+
+大量的Servlet专属的server.* properties被移到了server.servlet下：
+
+
+Old property | New property
+---|---
+server.context-parameters.* | server.servlet.context-parameters.*
+server.context-path | server.servlet.context-path
+server.jsp.class-name | server.servlet.jsp.class-name
+server.jsp.init-parameters.*  | server.servlet.jsp.init-parameters.*
+server.jsp.registered | server.servlet.jsp.registered
+server.servlet-path | server.servlet.path
+
+
+由此可以看出一些端倪，那就是server不再是只有servlet了，还有其他的要加入。
 
 
 ### 我们程序的入口
