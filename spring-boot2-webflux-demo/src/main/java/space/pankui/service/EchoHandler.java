@@ -32,8 +32,6 @@ public class EchoHandler {
      *
      */
     public Mono<ServerResponse> helloWorld(ServerRequest request) {
-        //return ServerResponse.ok().body(request.bodyToMono(String.class), String.class);
-
         return ServerResponse.ok().contentType(MediaType.TEXT_PLAIN)
                 .body(BodyInserters.fromObject("Hello, World!"));
     }
