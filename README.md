@@ -30,6 +30,9 @@ server.servlet-path | server.servlet.path
 
 由此可以看出一些端倪，那就是server不再是只有servlet了，还有其他的要加入。
 
+spring boot 2.0 新特性
+<https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-2.0-Migration-Guide>
+
 
 ### 我们程序的入口
 

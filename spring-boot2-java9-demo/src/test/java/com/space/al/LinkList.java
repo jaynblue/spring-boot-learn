@@ -8,37 +8,66 @@ import org.springframework.util.ReflectionUtils;
  * @date 03/04/2018
  * <pre>
  *
+ *  问题：判断一个单向链表是否有环，如果有环则找到环的入口节点。
+ *
+ *  <https://blog.csdn.net/piaojun_pj/article/details/5965298>
+ *
+ *  判断是否有环：
+ *
+ *      思路1：用两个指针p1,p2同时指向链表的头部，p1一次移动一步，p2一次移动两步，
+ *      如果最终p1和p2重合则说明链表有环，
+ *      如果p2走到空指针（链表的结尾）则说明链表无环。 时间复杂度为O (n)。
+ *
+ *
+ *      如果最终p1和p2重合，使p2重新指向链表的头结点，然后p1和p2同时一次移动一步，
+ *      当p1和p2再次重合时该节点指针就是环的入口节点指针。
+ *
  * </pre>
  */
 public class LinkList {
 
 
-    public ListNode hasCircle (ListNode head) {
+    public boolean hasCircle (ListNode head) {
 
+        boolean isHasCircle = false;
         // 链表为空
         if (head == null) {
-            return null;
+            return false;
         }
 
-        // 只有头结点
-        if (head.next == null) {
-            return null;
-        }
-        // next 表示从头结点开始每次往后走一步的指针
-        ListNode node = head;
-        // 表示从头结点开始每次往后走两步的指针
-        ListNode nextNext = head.next;
+        //指向链表的头部
+        ListNode p1 = head;
+
+        //指向链表的头部
+        ListNode p2 = head;
         //不为空执行while循环
-        while (nextNext != null) {
-            //单链表有环
-            if (node == nextNext){
-                return node;
-            }
-            node = node.next;
-            nextNext = nextNext.next.next;
+        while (p2 != null) {
 
+            if (p2.next == null || p2.next.next == null) {
+                return false;
+            }
+            // p1  一次移动一步
+            p1 = p1.next;
+
+            // p2一次移动两步
+            p2 = p2.next.next;
+
+            //单链表有环
+            if (p1 == p2){
+                isHasCircle = true;
+                break;
+            }
         }
-        return null;
+        if (isHasCircle) {
+            // 查找环的入口点，
+            p1 = head;
+            while (p1 != p2) {
+                p1 = p1.next;
+                p2 = p2.next;
+            }
+            System.out.println(p1.data);
+        }
+        return isHasCircle;
     }
 
 
@@ -52,21 +81,24 @@ public class LinkList {
 
         LinkList l = new LinkList();
 
-        ListNode node = new ListNode(1);
-        ListNode node1 = new ListNode(2);
-        ListNode node2 = new ListNode(3);
+        ListNode node1 = new ListNode(1);
+        ListNode node2 = new ListNode(2);
+        ListNode node3 = new ListNode(3);
+        ListNode node4 = new ListNode(4);
 
-        node.next = node1;
         node1.next = node2;
-        node2.next = node;
+        node2.next = node3;
+        node3.next = node4;
+        node4.next = node2;
 
 
-        System.out.println(node.toString());
+        //如果一个链表有环，那么用一个指针去遍历，是永远走不到头的。
+        //System.out.println(node.toString());
 
 
         LinkList linkList = new LinkList();
 
-        ListNode isCircle = linkList.hasCircle(node);
+        boolean isCircle = linkList.hasCircle(node1);
 
         System.out.println(isCircle);
 

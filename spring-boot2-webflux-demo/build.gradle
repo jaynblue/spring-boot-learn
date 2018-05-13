@@ -1,4 +1,4 @@
-group 'com.space'
+group 'spae.pankui'
 version '1.0-SNAPSHOT'
 
 apply plugin: 'java'
@@ -23,23 +23,12 @@ buildscript {
         classpath "org.springframework.boot:spring-boot-gradle-plugin:2.0.0.RELEASE"
     }
 }
-
 repositories {
     maven { url "http://maven.aliyun.com/nexus/content/groups/public" }
     mavenCentral()
 }
-
-
 dependencies {
-
-    compile ('org.springframework.boot:spring-boot-starter-web')
-
-    // 发现报了如下的错误：
-    // java.lang.NoClassDefFoundError: javax/xml/bind/JAXBException
-    // 查找资料有两个解决办法，先说简单的,即在build.gradle添加下面这个依赖：
-    compile group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.0'
-
-    testCompile group: 'org.springframework.boot', name: 'spring-boot-starter-test'
-
     testCompile group: 'junit', name: 'junit', version: '4.12'
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-webflux', version: '2.0.0.RELEASE'
+
 }
