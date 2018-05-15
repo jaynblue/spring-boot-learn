@@ -21,6 +21,4 @@ public class ExampleRestControllerEndpoint {
     public ResponseEntity<String> echo(@RequestParam("text") String text) {
         return ResponseEntity.ok().header("echo", text).body(text);
     }
-
-
 }

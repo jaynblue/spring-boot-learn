@@ -12,6 +12,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  *
  *      或者直接使用IDE 执行下就可以了。我弄了一天  执行 build 就可以了。囧
  *
+ *      使用 run Dashboard 运行
+ *
  * </pre>
  */
 

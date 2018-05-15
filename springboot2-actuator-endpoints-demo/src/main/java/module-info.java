@@ -21,6 +21,12 @@ module springboot2.actuator.endpoints.demo.main {
     requires spring.boot;
     requires spring.boot.autoconfigure;
     requires spring.boot.actuator;
+    requires spring.jcl;
+   // requires commons.logging;
+    requires org.apache.logging.log4j;
+
+    //requires javax.annotation;
+
 
 
     //需要导入每个包名
