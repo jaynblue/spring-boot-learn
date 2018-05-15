@@ -1,0 +1,30 @@
+spring:
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: never
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: ETL
+          threadPool:
+            threadCount: 50
+          jobStore:
+            class: org.quartz.impl.jdbcjobstore.JobStoreTX
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.oracle.OracleDelegate
+            tablePrefix: QRTZ_
+            useProperties: true
+
+scheduler:
+  datasource:
+    url: jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=XXXXXX)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=XXXX)))
+    username: scheduler
+    password: XXXXXX
+    driver-class-name: oracle.jdbc.OracleDriver
+
+t3:
+  datasource:
+    url: jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=XXXXXX)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=XXXXXX)))
+    username: app
+    password: XXXXXX
