@@ -26,4 +26,5 @@ module springboot2.actuator.endpoints.demo.main {
     //需要导入每个包名
     opens space.pankui;
     opens space.pankui.endpoint;
+    opens space.pankui.controller;
 }

@@ -22,10 +22,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * </pre>
  */
 
-//@Endpoint(id = "person")
-//@Component
+@Endpoint(id = "person")
+@Component
 public class PersonEndpoint {
-/*
+
     private final Map<String, Person> people = new ConcurrentHashMap<>();
 
     PersonEndpoint() {
@@ -59,5 +59,5 @@ public class PersonEndpoint {
         public String getName() {
             return this.name;
         }
-    }*/
+    }
 }

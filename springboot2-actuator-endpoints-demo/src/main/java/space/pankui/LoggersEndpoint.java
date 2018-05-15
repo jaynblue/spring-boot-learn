@@ -17,10 +17,10 @@ import java.util.Map;
  * </pre>
  */
 
-//@Endpoint(id = "loggers")
+@Endpoint(id = "loggers")
 public class LoggersEndpoint {
 
-   /* @ReadOperation
+    @ReadOperation
     public Map<String, Object> loggers() {
         return null;
     }
@@ -33,6 +33,6 @@ public class LoggersEndpoint {
     @WriteOperation
     public void configureLogLevel(@Selector String name, LogLevel configuredLevel) {
 
-    }*/
+    }
 
 }
