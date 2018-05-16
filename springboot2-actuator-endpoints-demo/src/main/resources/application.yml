@@ -1,0 +1,37 @@
+management:
+  endpoints:
+      web:
+        exposure:
+           include: "*"
+
+  endpoint:
+      health:
+        show-details: always
+
+
+#配置eureka
+eureka:
+  client:
+     service-url:
+        defaultZone: http://eureka.vipkid-qa.com.cn/eureka
+
+
+# spring.boot.admin.context-path=/admin
+# spring.boot.admin.client.url="http://localhost:8080"
+
+
+
+spring:
+  security:
+    user:
+      name: "user"
+      password: "password"
+  boot:
+    admin:
+      client:
+        username: "user"       #These two are needed so that the client
+        password: "password"   #can register at the protected server api
+        instance:
+          metadata:
+            user.name: "user"         #These two are needed so that the server
+            user.password: "password" #can access the protected client endpoints

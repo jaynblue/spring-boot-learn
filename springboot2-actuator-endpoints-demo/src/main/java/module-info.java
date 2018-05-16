@@ -5,7 +5,7 @@
  *
  * </pre>
  */
-module springboot2.actuator.endpoints.demo.main {
+module springboot.actuator.endpoints.demo.main {
 
     requires java.sql;
 
@@ -21,16 +21,15 @@ module springboot2.actuator.endpoints.demo.main {
     requires spring.boot;
     requires spring.boot.autoconfigure;
     requires spring.boot.actuator;
-    requires spring.jcl;
-   // requires commons.logging;
-    requires org.apache.logging.log4j;
-
-    //requires javax.annotation;
-
+    requires de.codecentric.spring.boot.admin.server;
+    requires spring.boot.starter.security;
+    requires spring.security.config;
+    requires spring.security.web;
 
 
     //需要导入每个包名
     opens space.pankui;
     opens space.pankui.endpoint;
     opens space.pankui.controller;
+    opens space.pankui.conf;
 }

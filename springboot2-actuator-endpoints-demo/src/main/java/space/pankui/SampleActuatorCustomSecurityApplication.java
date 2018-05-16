@@ -3,6 +3,8 @@ package space.pankui;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import de.codecentric.boot.admin.server.config.EnableAdminServer;
+
 /**
  * @author pankui
  * @date 15/05/2018
@@ -18,6 +20,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  */
 
 @SpringBootApplication
+@EnableAdminServer
 public class SampleActuatorCustomSecurityApplication {
 
     public static void main(String[] args) {
