@@ -11,6 +11,8 @@ import org.springframework.security.web.authentication.SavedRequestAwareAuthenti
  * @date 16/05/2018
  * <pre>
  *
+ *  默认情况下，自动配置会保护所有端点.
+ *
  * </pre>
  */
 
@@ -24,19 +26,30 @@ public class SecuritySecureConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        // @formatter:off
+
         SavedRequestAwareAuthenticationSuccessHandler successHandler = new SavedRequestAwareAuthenticationSuccessHandler();
         successHandler.setTargetUrlParameter("redirectTo");
 
-        http.authorizeRequests()
+        http
+                //authorizeRequests()配置路径拦截，表明路径访问所对应的权限，角色，认证信息。
+                .authorizeRequests()
                 .antMatchers(adminContextPath + "/assets/**").permitAll()
                 .antMatchers(adminContextPath + "/login").permitAll()
                 .anyRequest().authenticated()
                 .and()
-                .formLogin().loginPage(adminContextPath + "/login").successHandler(successHandler).and()
-                .logout().logoutUrl(adminContextPath + "/logout").and()
-                .httpBasic().and()
+                //对应表单认证相关的配置
+                .formLogin()
+                //指定url为"/login"作为自定义的登录界面(登录页面的访问路径)
+                .loginPage(adminContextPath + "/login")
+                .successHandler(successHandler)
+                .and()
+                //用户退出操作
+                .logout()
+                //用户退出所访问的路径，
+                .logoutUrl(adminContextPath + "/logout")
+                .and()
+                .httpBasic()
+                .and()
                 .csrf().disable();
-        // @formatter:on
     }
 }
