@@ -1,4 +1,4 @@
-package space.pankui.endpoint;
+package space.pankui;
 
 import org.springframework.boot.actuate.endpoint.web.annotation.RestControllerEndpoint;
 import org.springframework.http.ResponseEntity;

@@ -7,8 +7,8 @@ apply plugin: 'idea'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = 1.9
+targetCompatibility = 1.9
 
 
 //  java 9 gradle 打包, 需要加上这个
@@ -98,9 +98,6 @@ dependencies {
     compile group: 'de.codecentric',name: 'spring-boot-admin-starter-client',version: '2.0.0-SNAPSHOT', changing: true
 
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-security', version: '2.0.0.RELEASE'
-
-
-    compile group: 'org.springframework.cloud', name: 'spring-cloud-starter-eureka', version: '1.4.4.RELEASE'
 
 
 }
